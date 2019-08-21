@@ -1,4 +1,4 @@
-function [dorsal_ratio, ventral_ratio, dorsal, dorsal_gfp, ventral, ventral_gfp] = collect_DV_data(folder, frames)
+function [dorsal_ratio, ventral_ratio, dorsal, ventral] = collect_DV_data(folder, frames)
 
 f = dir(fullfile(folder, '*.mat'));
 numsamples = numel(f);
@@ -48,6 +48,6 @@ dorsal_ratio = (dorsal./dorsal_start)';
 ventral_ratio = (ventral./ventral_start)';
 
 dorsal = dorsal'; dorsal_gfp = dorsal_gfp';
-ventral = ventral'; ventral_gfp = ventral_gfp';
+ventral = ventral'; ventral_
 
 end

@@ -1,11 +1,11 @@
-function [dorsal_data, ventral_data, centerline_data, centerline_data_spline, curvdata, curvdatafiltered] = extract_centerline_vd(imagelist, close_para, fill_para, thresh, dil)
+function [dorsal_data, ventral_data, centerline_data, centerline_data_spline, curvdata, curvdatafiltered] = extract_centerline_vd_updated(imagelist, close_para, fill_para, thresh, dil)
     
     fps = 20;
     spline_p = 0.001;
     istart = 1;
     iend = size(imagelist,1);
 %     thresh = 1;
-    bgd = 300;
+%     bgd = 300;
 %     do_multitif = 1;
 
     % Enter the frame rate, start and end frame selected from the imaging sequences

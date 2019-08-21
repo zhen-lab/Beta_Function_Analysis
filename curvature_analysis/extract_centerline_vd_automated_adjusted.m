@@ -1,10 +1,10 @@
-function [dorsal_data, ventral_data, centerline_data, centerline_data_spline, curvdata, curvdatafiltered] = extract_centerline_vd_automated_adjusted(imagelist, filename, close_para, fill_para)
+function [dorsal_data, ventral_data, centerline_data, centerline_data_spline, curvdata, curvdatafiltered] = extract_centerline_vd_automated_adjusted(imagelist, filename, close_para, fill_para, thresh)
     
     fps = 20;
     spline_p = 0.001;
     istart = 1;
     iend = size(imagelist,1);
-    thresh = 2;
+%     thresh = 2;
 %     do_multitif = 1;
 
     % Enter the frame rate, start and end frame selected from the imaging sequences

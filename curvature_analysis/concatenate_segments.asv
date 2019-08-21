@@ -1,0 +1,68 @@
+prompt = {'How many segments to concatenate?', 'Total # of frames'};
+dlgtitle = '# of segments and frames';
+dims = [1 35];
+definput = {'2', '1800'};
+answer = inputdlg(prompt,dlgtitle,dims,definput);
+numseg = str2double(answer{1}); 
+numframes = str2double(answer{2});
+
+if numseg < numframes
+    
+    chunk_curv = cell(numseg,1);
+    chunk_dorsal = cell(numseg,1);
+    chunk_dorsal_r = cell(numseg,1);
+    chunk_ventral = cell(numseg,1);
+    chunk_ventral_r = cell(numseg,1);
+    chunk_seg = zeros(numseg,2);
+
+    for i = 1:numseg
+
+        filename = uigetfile('.mat', ['Select segment' num2str(i)]);
+        load(filename);
+        deflength = size(curvdatafiltered,2);
+        
+        prompt = {['Start of segment' num2str(i)], ['Length of segment' num2str(i)],...
+            ['Segment ' num2str(i) ' begins from:']};
+        dlgtitle = 'Range of segment';
+        dims = [1 35];
+        definput = {'1', num2str(deflength), []};
+        answer = inputdlg(prompt,dlgtitle,dims,definput);    
+        istart = num2double(answer{1});
+        ilength = num2double(answer{2});
+        framestart = num2double(answer{3});
+        actualstart = framestart+istart-1;
+        actualend = framestart+ilength-1;
+        
+        if istart>numframes || ilength>numframes || istart>ilength || actualstart>numframes
+            fprintf('Inputs exceed boundary. \n');
+        else
+            chunk_curv{i} = curvdatafiltered(:, actualstart:actualend);
+            chunk_dorsal{i} = dorsal_smd(:, actualstart+istart:actualstart+ilength);
+            chunk_dorsal_r{i} = dorsal_smd_r(:, actualstart+istart:actualstart+ilength);
+            chunk_ventral{i} = ventral_smd(:, actualstart+istart:actualstart+ilength);
+            chunk_ventral_r{i} = ventral_smd_r(:, actualstart+istart:actualstart+ilength); 
+            chunk_seg(i,1) = istart;
+            chunk_seg(i,2) = ilength;
+        end
+
+    end
+    
+    total_curv = NaN(size(curvdatafiltered,1), numframes);
+    total_dorsal = NaN(size(dorsal_smd,1), numframes);
+    total_dorsal_r = NaN(size(dorsal_smd_r,1), numframes);
+    total_ventral = NaN(size(ventral_smd,1), numframes);
+    total_ventral_r = NaN(size(ventral_smd_r,1), numframes);
+    
+    for j = 1:numseg
+        total_curv(:, chunk_seg(j,1):chunk_seg(j,2)) = chunk_curv{j};
+        total_dorsal(:, chunk_seg(j,1):chunk_seg(j,2)) = chunk_dorsal{j};
+        total_dorsal_r(:, chunk_seg(j,1):chunk_seg(j,2)) = chunk_dorsal_r{j};
+        total_ventral(:, chunk_seg(j,1):chunk_seg(j,2)) = chunk_ventral{j};
+        total_ventral_r(:, chunk_seg(j,1):chunk_seg(j,2)) = chunk_ventral_r{j};        
+    end
+    
+else
+    
+    fprintf('# of segments cannot exceed # of frames. \n');
+    
+end

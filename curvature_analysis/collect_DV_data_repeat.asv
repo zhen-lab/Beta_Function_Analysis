@@ -1,0 +1,16 @@
+%%
+parts = strsplit(pwd, '\');
+partlast = parts(end);
+
+fname = [partlast '_Dorsal_Ventral_All'];
+
+%%
+framenum = 1800;
+[dorsal_ratio, ventral_ratio, dorsal, ventral] ...
+    = collect_DV_data(pwd, framenum);
+save(fname, 'dorsal_ratio', 'ventral_ratio', 'dorsal', 'ventral');
+
+%%
+[dorsal_mean, ventral_mean] = collect_DV_data_mean(dorsal, ventral);
+dv_mean = [dorsal_mean ventral_mean];
+save([fname '_mean'], 'dv_mean');
