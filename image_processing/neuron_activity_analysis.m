@@ -4,7 +4,7 @@
 setup_proof_reading;
 fprintf('tiff files loading finished. \n');
 imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
-coef = 20;
+% coef = 20;
 
 % Registration
 answer = questdlg('Need registration?', 'Image processing');
@@ -30,6 +30,10 @@ data_path_name = fullfile(data_path, [filename(1:end-4) '.mat']);
 save(data_path_name, ...
     'signal', 'signal_mirror', 'ratio', 'neuron_position_data', 'dual_position_data');
 fprintf('data saved. \n');
+
+%% Curvature analysis with three points
+
+curvature_pts;
 
 %% Write registered tiff file
 

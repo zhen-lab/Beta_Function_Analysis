@@ -1,4 +1,6 @@
-frmnum = 10;
+answer = inputdlg({'Registration coefficient','Frame number to be used'}, 'Input frame number', [1 35], {'1','10'});
+frmnum = str2double(answer{1});
+coef = str2double(answer{2});
 fixed = imagelist_r{frmnum};
 moving = imagelist_g{frmnum};
 movingRegistered = imagelist_g;

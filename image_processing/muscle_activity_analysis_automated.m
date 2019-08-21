@@ -21,20 +21,46 @@ for l = 1:numfiles
     fprintf('tiff files loading finished. \n');
 
     % Register RFP and GFP channels
-    coef = 5; image_registration_tform;
+    image_registration_tform;
     figure; 
     subplot(1,2,1); imshowpair(imagelist_g{frmnum,1}, imagelist_r{frmnum,1});
     subplot(1,2,2); imshowpair(movingRegistered{frmnum,1}, imagelist_r{frmnum,1});
-    imagelist_g = movingRegistered;
     fprintf('channel registration finished. \n');
     pause;
     close all;
+    
+    % Remove edges from registration
+    imagelist_g = movingRegistered;
+    imagelist_use = imagelist_g;
+
+    for i = 1:length(imagelist)
+        img = imagelist_g{i,1};
+        img = img + mean(img,[1 2])*uint16(img==0);
+        imagelist_use{i,1} = img;
+    end
+    fprintf('edges removed. \n');
+
+    % Overlay two channels if necessary
+    imagelist_gr = imagelist_use;
+    for i = 1:length(imagelist)
+        imagelist_gr{i,1} = imagelist_use{i,1}+imagelist_r{i,1};
+    end
+    imagelist_use = imagelist_gr;
+    fprintf('channels overlaid. \n');
+    
+    prompt = {'Close parameter', 'Fill parameter',...
+    'Threshold'};
+    dlgtitle = 'Morphological operations specs';
+    dims = [1 35];
+    definput = {'6', '4', '2.5'};
+    answer = inputdlg(prompt,dlgtitle,dims,definput); 
     
     % Delineate dorsal and ventral muscles
 %     tic; 
     [dorsal_data, ventral_data, centerline_data, centerline_data_spline, curvdata, curvdatafiltered] = ...
         extract_centerline_vd_automated_adjusted(...
-        imagelist_g, totalfilename{1,l}, 5, 5);
+        imagelist_use, totalfilename{1,l}, ...
+        str2double(answer{1}), str2double(answer{2}), str2double(answer{3}));
 %     toc;
 
     % Store information for individual movie
@@ -71,11 +97,15 @@ for j = 1:numfiles
     [dorsal_smd, ventral_smd, dorsal_smd_r, ventral_smd_r] = ...
         activity_all(mst_imagelist_g{j,1}, mst_imagelist_r{j,1}, mst_range{j,1}, mst_dorsal_data{j,1}, mst_ventral_data{j,1}, mst_centerline_data_spline{j,1}, mst_curvdatafiltered{j,1});
     fprintf('activity analysis finished. \n');
-%     figure;
+%     figure;6
 %     subplot(1,2,1); imagesc(dorsal_smd./dorsal_smd_r); title('Dorsal');
 %     subplot(1,2,2); imagesc(ventral_smd./ventral_smd_r); title('Ventral');
 %     toc;
-
+    centerline_data_spline = mst_centerline_data_spline{j,1};
+    curvdatafiltered = mst_curvdatafiltered{j,1};
+    dorsal_data = mst_dorsal_data{j,1}; 
+    ventral_data = mst_ventral_data{j,1}; 
+    
     % Save data
     parts = strsplit(totalpathname, '\');
     data_path = fullfile(parts{1,1:end-3}, 'Alpha_Data_Raw', parts{1,end-1});

@@ -18,7 +18,7 @@ hold on;
 cmp = lbmap(size(ratio, 2), 'redblue');
 for i=1:size(ratio, 2)
 plot(ratio(:, i), 'color', cmp(i, :), 'linewidth', 2);
-end;
+end
 title('Peri-event plot of DB activities', 'fontsize', 15);
 xlim([1 size(ratio, 1)+1]); ylim([0 1.1*max(max(ratio))]);
 set(gca, 'xtick', [], 'ticklength', [0.001 0.001], 'linewidth', 2.5); 
