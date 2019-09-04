@@ -1,9 +1,13 @@
+%% Clear everything
+
+clear; close all;
+
 %% Set up inputs
 
 input_d = dorsal_ratio;
 input_v = ventral_ratio;
 ymin = 0;
-ymax = 5;
+ymax = 2;
 
 s_exp = []; 
 s_ctrl = [];
