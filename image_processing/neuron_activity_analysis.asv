@@ -1,39 +1,85 @@
-%% Prcoess data and track neurons 
+%% Clear everything
+
+clear; close all;
+
+%% Load images
 
 % Load tiff files
 setup_proof_reading;
 fprintf('tiff files loading finished. \n');
-imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
-questdlg('Need registration?', '
 
-%% Register RFP and GFP channels
+%% Register channels
+
 close all;
-figure; 
-subplot(1,2,1); imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
+figure; set(gcf, 'units', 'normalized',...
+    'outerposition', [0.1 0.1 0.8 0.8]);
+subplot(1,2,1); 
+imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
 image_registration_tform; 
-subplot(1,2,2); imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
+subplot(1,2,2); 
+imshowpair(movingRegistered{1,1}, imagelist_r{1,1});
+title('Press return to continue...');
+pause;
+close all;
+
+save([filename(1:end-4) '_tform.mat'],...
+    'tform', 'optimizer', 'metric');
+
+
+%% Register channels with existing transformation matrix
+
+transform = i
+movingRegistered = imagelist_g;
+imagelistRegistered = imagelist;
+for i = 1:size(imagelist_r, 1)
+    
+    movingRegistered{i} = imwarp(imagelist_g{i},tform,'OutputView',imref2d(size(imagelist_g{i})));
+    imagelistRegistered{i,1} = [imagelist_r{i} movingRegistered{i}];
+    
+end
 
 %% Track neuron and generate signal
+
+imagelist = imagelistRegistered;
 proof_reading(imagelist, [], filename, ...
-    istart, iend, 1, 0);
+    istart, iend, 1);
 
-%% Save data
+% %% Save data
+% 
+% prompt = {'Neuron analyzed just now: '};
+% dlgtitle = ['Neuron name for ' filename];
+% dims = [1 35];
+% definput = {''};
+% answer = inputdlg(prompt,dlgtitle,dims,definput);
+% neuronname = answer{1};
+% if isempty(neuronname)
+%     data_path_end = [filename(1:end-4) '.mat'];
+% else
+%     data_path_end = [neuronname '_' filename(1:end-4) '.mat'];
+% end
+% 
+% parts = strsplit(pathname, '\');
+% data_path = fullfile(parts{1,1:end-3}, 'Alpha_Data_Raw', parts{1,end-1});
+% warning('off'); mkdir(data_path);
+% 
+% data_path_name = fullfile(data_path, data_path_end);
+% save(data_path_name, ...
+%     'signal', 'signal_mirror', 'ratio', 'neuron_position_data', 'dual_position_data');
+% 
+% fprintf([data_path_end ' data saved. \n']);
 
-parts = strsplit(pathname, '\');
-data_path = fullfile(parts{1,1:end-3}, 'Alpha_Data_Raw', parts{1,end-1});
-warning('off'); mkdir(data_path); 
-data_path_name = fullfile(data_path, [filename(1:end-4) '.mat']);
-save(data_path_name, ...
-    'signal', 'signal_mirror', 'ratio', 'neuron_position_data', 'dual_position_data');
-fprintf('data saved. \n');
+%% Curvature analysis with three points
+
+curvature_pts;
 
 %% Write registered tiff file
-imagelist_reg = imagelist;
+
 for i = 1:length(imagelist)
-    imagelist_reg{i,1} = [imagelist_r{i,1} imagelist_g{i,1}];
     if i==1
-        imwrite(imagelist_reg{i,1}, [filename(1:end-4) '_reg.tif']);
+        imwrite(imagelist{i,1}, [filename(1:end-4) '_reg.tif']);
     else
-        imwrite(imagelist_reg{i,1}, [filename(1:end-4) '_reg.tif'], 'writemode', 'append');
+        imwrite(imagelist{i,1}, [filename(1:end-4) '_reg.tif'], 'writemode', 'append');
     end
 end
+
+fprintf('registered recording saved. \n');

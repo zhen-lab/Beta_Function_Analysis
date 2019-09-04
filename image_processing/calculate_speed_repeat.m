@@ -10,6 +10,7 @@ numneurons = 2;
 [forward, backward, ~, ~] = collect_FB_data(pwd, numneurons);
 
 %% Draw signals in forward and backward movements respectively
+
 answer = questdlg('Are neurons of the same type?', 'Neuron types', 'Yes', 'No', 'Yes');
 switch answer
     case 'Yes'

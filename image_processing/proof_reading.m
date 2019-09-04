@@ -33,7 +33,7 @@ function varargout = proof_reading(varargin)
 
 % Edit the above text to modify the response to help proof_reading
 
-% Last Modified by GUIDE v2.5 27-Jul-2018 17:55:57
+% Last Modified by GUIDE v2.5 30-Aug-2019 14:03:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -70,7 +70,6 @@ handles.filename=varargin{3};
 handles.istart=varargin{4};
 handles.iend=varargin{5};
 
-
 [height,width]=size(handles.img_stack{1,1});
 sections=length(handles.img_stack);
 handles.image_width=width;
@@ -86,7 +85,7 @@ set(hObject,'Units','pixels');
 % axes(handles.Image_axes);
 handles.low=0;
 handles.high=2000;
-handles.tracking_threshold=100;
+handles.tracking_threshold=5;
 
 img=imagesc(handles.img_stack{handles.istart,1});
 colormap(gray);
@@ -137,6 +136,10 @@ set(handles.slider1, ...
     'SliderStep', [min_step max_step]);
 
 handles.frame_number=1;
+
+handles.nameedited = 0;
+handles.neuronname = [];
+handles.data_path_end = [];
 
 handles.output = hObject;
 
@@ -847,8 +850,8 @@ if ~isempty(handles.neuronal_position{handles.frame_number, 1})
         handles.signal{k}=GC; % GFP signal
         handles.signal_mirror{k}=GC_m; % RFP signal
         handles.signal_GFPoverRFP{k}=GC_GoR; % GFP/RFP signal
-
-        figure (1);
+        
+        figure(1);
         
         subplot(handles.neuron_number * 2, 1, 2 * k - 1); 
         plot(((1:handles.frame_number)+handles.istart-1), handles.signal{k}, 'g'); hold on;
@@ -925,6 +928,12 @@ for i=1:length(neuron_position_data)
 end
 assignin('base','neuron_position_data',neuron_position_data);
 
+handles.exported = 1;
+
+fprintf('data exported.\n');
+
+guidata(hObject,handles);
+
 
 % --- Executes on slider movement.
 function Threshold_slider_Callback(hObject, eventdata, handles)
@@ -945,4 +954,67 @@ function Threshold_slider_CreateFcn(hObject, eventdata, handles)
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+function Neuron_name_Callback(hObject, eventdata, handles)
+% hObject    handle to Neuron_name (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of Neuron_name as text
+%        str2double(get(hObject,'String')) returns contents of Neuron_name as a double
+
+handles.neuronname = get(hObject, 'String');
+
+if isempty(handles.neuronname)
+    handles.data_path_end = [handles.filename(1:end-4) '.mat'];
+else
+    handles.data_path_end = [handles.neuronname '_' handles.filename(1:end-4) '.mat'];
+end
+
+handles.nameedited = 1;
+
+guidata(hObject,handles);
+
+% --- Executes during object creation, after setting all properties.
+function Neuron_name_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to Neuron_name (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in Save_data.
+function Save_data_Callback(hObject, eventdata, handles)
+% hObject    handle to Save_data (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+parts = strsplit(pwd, '\');
+data_path = fullfile(parts{1,1:end-2}, 'Alpha_Data_Raw', parts{1,end});
+warning('off'); mkdir(data_path);
+data_path_name = fullfile(data_path, handles.data_path_end);
+
+signal = handles.signal;
+signal_mirror = handles.signal_mirror;
+ratio = handles.signal_GFPoverRFP;
+dual_position_data = handles.neuronal_position;
+neuron_position_data=zeros(handles.frame_number,2);
+for i=1:length(neuron_position_data)
+    neuron_position_data(i,:)=handles.neuronal_position_left{i,1};
+end
+
+if handles.nameedited==1
+    save(data_path_name, ...
+        'signal', 'signal_mirror', 'ratio', ...
+        'neuron_position_data', 'dual_position_data');
+    fprintf([handles.data_path_end ' data saved. \n']);
+else
+    fprintf('please name neurons before saving data. \n');
 end

@@ -16,7 +16,7 @@ fprintf('speed calculation is done. \n');
 
 %% Curate speed profile by GUI
 
-smallarea = 1; % If the images were cropped in segmetation into 1/4, set this to 1; else set this to 0
+smallarea = 0; % If the images were cropped in segmetation into 1/4, set this to 1; else set this to 0
 behavior_correct_speed(...
     imagelist, filename, 1, 2000, ...
     dorsal_data, ventral_data, ...
@@ -74,7 +74,7 @@ clear; close all
 % Select tiff file
 setup_proof_reading;
 
-% Generate brightness data
+%% Generate brightness data
 totalfrm = size(imagelist,1);
 brightness = zeros(totalfrm,1);
 for i = 1:totalfrm
