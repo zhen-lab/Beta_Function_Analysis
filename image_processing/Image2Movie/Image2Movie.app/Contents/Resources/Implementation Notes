@@ -1,0 +1,52 @@
+My first attempt used QTKit to create movies. This works perfectly fine, but does not allow me to set the bit rate of the movies. This is a problem because it forces an extra step in my Matlab-QTMovie workflow. Not good.
+
+After asking on the Quicktime mailing list, it became clear that my best bet, short of the old C interface, was to use AVFoundation. Specifically, create an AVAssetWriter, AVAssestWriterInput and go from there. This is certainly more complicated, but it does get the job done. Here's an outline of how this is to be implemented.
+
+1. Create an AVAssetWriter specifying the file location and file type.
+
+2. Create an AVAssetWriterInput specifying the image size and codec details (including bit rate).
+
+3a. Add CMSampleBufferRef instace of the images to the writerInput over some loop. But how to get from image pixels to a CMSampleBufferRef?
+
+3b. Create an AVAssetWriterInputPixelBufferAdaptor. This provides access to a memory buffer pool that coordinates with the writer.
+
+4. If I understand this correctly, one should then request a buffer from the pool, and draw/write to the buffer.
+
+
+Now we need to go figure out appropriate compression settings,
+	https://developer.apple.com/library/ios/#technotes/tn2010/tn2224.html
+	
+
+Recompressing a 1920x646 movie with data rate of 86.60 Mbits/s using Apple's settings with the following names:
+
+Name							Aspect Ratio	Avg Mb/s	Max Mb/s	Profile     (pixel/s)/(Mb/s)
+----							------------	--------	--------	-------     ----------------
+Original						1920x646		86.60		----		Main@4.1    0.43
+"1080p"							1920x646		 9.03		60.0		Main@4.1    4.12
+"Mac & PC"						1920x646		 9.03		60.0		Main@4.1    4.12
+"iPad, iPhone 4 & Apple TV"		1280x430		 4.97		12.7		Main@3.1    3.32
+"720p"							1280x430		 5.23		24.0		Main@3.2    3.15
+"iPod Touch & iPhone 3GS"		640x215			 1.53		9.0			Main@3.0    2.79
+"480p"							640x215			 1.61		12.0		Main@3.0    2.56
+
+Pacific Rim Trailer             1920x1080        7.263      ----        High@4.0    7.13
+Bourne Ultimatum Trailer        1920x816         7.435                  Base@4.1    5.05
+
+The latest AppleTV supports Main@4.0
+
+Check out these guys' settings as well,
+	https://app.zencoder.com/docs/guides/encoding-settings/ios-and-mobile
+
+I'm confused though, because I thought that we had to use Baseline settings for the the mobile stuff.
+
+	
+This reall seems like I could have three different settings
+
+480p, "mobile devices or better..." Main30, 1.5 Mb/s
+720p, "modern mobile, web, computers, AppleTV", Main31, 5.0 Mb/s
+1080, "presentations, movies, etc.", Main
+
+Also -- have to be careful that a custom size * framerate does not exceed the profile being used. See this,
+	http://en.wikipedia.org/wiki/H.264/MPEG-4_AVC#Profiles
+    
+User settings should be *frame rate* and *original, the three sizes, custom*. If the user chooses original, we will choose an appropriate bit rate. If the user chooses *custom* size/profile this will reveal more details.
