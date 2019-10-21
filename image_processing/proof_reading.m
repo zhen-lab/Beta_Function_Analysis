@@ -33,7 +33,7 @@ function varargout = proof_reading(varargin)
 
 % Edit the above text to modify the response to help proof_reading
 
-% Last Modified by GUIDE v2.5 27-Jul-2018 17:55:57
+% Last Modified by GUIDE v2.5 14-Jun-2019 16:50:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -311,6 +311,12 @@ else
 
 end
 
+import java.awt.*;
+import java.awt.event.*;
+rob = Robot;
+rob.keyPress(KeyEvent.VK_TAB)
+rob.keyRelease(KeyEvent.VK_TAB)
+
 guidata(hObject,handles);
 
 
@@ -362,7 +368,16 @@ else
     
 end
 
+import java.awt.*;
+import java.awt.event.*;
+rob = Robot;
+rob.keyPress(KeyEvent.VK_TAB)
+rob.keyRelease(KeyEvent.VK_TAB)
+
 guidata(hObject,handles);
+
+
+
 
 
 % --------------------------------------------------------------------
@@ -785,6 +800,19 @@ for j=handles.frame_number+1:iend
             
     end
 end
+
+import java.awt.*;
+import java.awt.event.*;
+rob = Robot;
+rob.keyPress(KeyEvent.VK_TAB)
+rob.keyRelease(KeyEvent.VK_TAB)
+rob.keyPress(KeyEvent.VK_TAB)
+rob.keyRelease(KeyEvent.VK_TAB)
+rob.keyPress(KeyEvent.VK_TAB)
+rob.keyRelease(KeyEvent.VK_TAB)
+rob.keyPress(KeyEvent.VK_TAB)
+rob.keyRelease(KeyEvent.VK_TAB)
+
 guidata(hObject, handles);
 
 % --- Executes on button press in Signal_plot.
@@ -822,8 +850,8 @@ if ~isempty(handles.neuronal_position{handles.frame_number, 1})
             c_shape = uint16(circle_pixels(handles.image_width, handles.image_height, x - handles.image_width/2, y, handles.r(k)))'; % Cell body shape defined by reference fluorescence
             
             % Extract ROI and subtract background
-            img_bw = double(img .* c_mask - subtract_logical * background); % Negative values are all zero; Raise to double format so that the ratio can be more accurate
-            img_shape = double(img .* c_shape - subtract_logical * background);
+            img_bw = double(uint16(img) .* c_mask - subtract_logical * uint16(background)); % Negative values are all zero; Raise to double format so that the ratio can be more accurate
+            img_shape = double(uint16(img) .* c_shape - subtract_logical * uint16(background));
             img_shape_positive = img_shape > 0;
             
             % Normalize the signal with corresponding pixels
@@ -925,24 +953,31 @@ for i=1:length(neuron_position_data)
 end
 assignin('base','neuron_position_data',neuron_position_data);
 
-
-% --- Executes on slider movement.
-function Threshold_slider_Callback(hObject, eventdata, handles)
-% hObject    handle to Threshold_slider (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
+% --- Executes on key press with focus on figure1 or any of its controls.
+function figure1_WindowKeyPressFcn(hObject, eventdata, handles)
+    slider1_KeyPressFcn
+% hObject    handle to figure1 (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.FIGURE)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+% --- Executes on key press with focus on figure1 or any of its controls.
+function figure1_KeyPressFcn(hObject, eventdata, handles)
+    slider1_KeyPressFcn
+% hObject    handle to figure1 (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.FIGURE)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
 
-
-% --- Executes during object creation, after setting all properties.
-function Threshold_slider_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to Threshold_slider (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
+% --- Executes on key press with focus on slider1 and none of its controls.
+function slider1_KeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to slider1 (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)

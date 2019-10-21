@@ -6,6 +6,9 @@ fprintf('tiff files loading finished. \n');
 imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
 coef = 20;
 
+
+
+
 % Registration
 answer = questdlg('Need registration?', 'Image processing');
 if strcmp(answer,'Yes')==1
@@ -21,10 +24,12 @@ end
 proof_reading(imagelist, [], filename, ...
     istart, iend, 1);
 
+
+
 %% Save data
 
 parts = strsplit(pathname, '\');
-data_path = fullfile(parts{1,1:end-3}, 'Alpha_Data_Raw', parts{1,end-1});
+data_path = fullfile(parts{1,1:end-1}, 'Alpha_Data_Raw', parts{1,end});
 warning('off'); mkdir(data_path); 
 data_path_name = fullfile(data_path, [filename(1:end-4) '.mat']);
 save(data_path_name, ...
@@ -33,7 +38,7 @@ fprintf('data saved. \n');
 
 %% Write registered tiff file
 
-for i = 1:length(imagelst)
+for i = 1:length(imagelist)
     if i==1
         imwrite(imagelist{i,1}, [filename(1:end-4) '_reg.tif']);
     else

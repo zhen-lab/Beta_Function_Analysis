@@ -285,7 +285,7 @@ else
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Save data
-            parts = strsplit(pathname, '\');
+            parts = strsplit(pathname, '/');
             data_path = fullfile(parts{1,1:end-3}, 'Alpha_Data_Raw', parts{1,end-1});
             warning('off'); mkdir(data_path); 
             data_path_name = fullfile(data_path, [filename(1:end-4) '_velocity.mat']);
@@ -299,7 +299,7 @@ else
             % Save figures
             data_path = fullfile(parts{1,1:end-3}, 'Alpha_Data_Plot', parts{1,end-1});
             warning('off'); mkdir(data_path); 
-            savefig(s, [data_path '\' filename(1:end-4) '_velocity.fig']);
+            savefig(s, fullfile(data_path, [filename(1:end-4) '_velocity.fig']));
             fprintf('figures saved. \n');
             fprintf([filename ' analysis finished. \n']);
             
