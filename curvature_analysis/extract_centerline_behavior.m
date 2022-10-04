@@ -1,10 +1,11 @@
-function [dorsal_data, ventral_data, centerline_data, centerline_data_spline, curvdata, curvdatafiltered] = extract_centerline_behavior(imagelist, smallarea, close_para, fill_para, thresh, adpt_max, adpt_min)
+function [dorsal_data, ventral_data, centerline_data, centerline_data_spline, curvdata, curvdatafiltered, bounds] = extract_centerline_behavior(imagelist, img_stack, smallarea, close_para, fill_para, thresh, adpt_max, adpt_min)
     
-    fps = 20;
-    spline_p = 0.001;
-    istart = 1;
-    iend = size(imagelist,1);
-    sigma_gauss = 1.2; % Gaussian filter for small area
+fps = 20;
+spline_p = 0.001;
+istart = 1;
+iend = size(imagelist,1);
+sigma_gauss = 1.2; % Gaussian filter for small area
+%     smallareabound = [1/6 5/6];
 %     thresh = 1;
 %     bgd = 300;
 %     do_multitif = 1;
@@ -59,6 +60,15 @@ end
 avgint_min = min(avgint);
 avgint_max = max(avgint);
 
+% If using small area, show overlaid trajectory and determine boundary to zoom in
+if smallarea
+    figure; imagesc(min(img_stack, [], 3));
+    r = drawrectangle(gca); rpos = round(r.Position);
+    leftbound = rpos(1); rightbound = rpos(1)+rpos(3);
+    upbound = rpos(2); lowbound = rpos(2)+rpos(4);
+end
+bounds = [leftbound rightbound upbound lowbound];
+
 %%%%%%%%%%%%%%%%%%%%%%%Main Loop%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for j = istart:iend
@@ -70,7 +80,7 @@ for j = istart:iend
     % Select area of interest
     if smallarea
         img_large = imagelist{j,1};
-        img = img_large(end/4:end/4*3, end/4:end/4*3);
+        img = img_large(upbound:lowbound, leftbound:rightbound);
         img = imgaussfilt(img, sigma_gauss);
     else
         img = imagelist{j,1};
@@ -100,16 +110,16 @@ for j = istart:iend
     % Head and tail manual estimate in the starting frame
     if j == istart
         
-        figure (1);
+        figure(1);
         imagesc(adj); colormap(gray); % Adjust low contrast gray image
         axis equal; axis off; hold on;
         
-        text(10, 20, 'Click on head', 'Color', 'white');
+        text(10, 20, 'Click on head', 'Color', 'r');
         [headx, heady] = ginput(1);
         hold on; plot(headx, heady, 'og');
 %         headx0 = headx; heady0 = heady;
 
-        text(10, 40, 'Click on tail', 'Color', 'white');
+        text(10, 40, 'Click on tail', 'Color', 'r');
         [tailx, taily] = ginput(1);
         hold on; plot(tailx, taily, 'oy');
 %         tailx0 = tailx; taily0 = taily;
@@ -160,12 +170,12 @@ for j = istart:iend
 %         bkg_c=mean(mean(c(cropy1_bkg:cropy2_bkg,cropx1_bkg:cropx2_bkg))); 
     
         
-        text(10, 60, 'Click on ventral side', 'Color', 'white');     
+        text(10, 60, 'Click on ventral side', 'Color', 'r');     
         [vulvax, vulvay] = ginput(1);
         
     end
     
-    figure (1);
+    figure(1);
     drawnow; hold off;
     imagesc(adj); colormap(gray); axis equal; axis off; hold on;
     text(10,  10,  [num2str(j) ' ' num2str(adpt)],  'Color',  'r');

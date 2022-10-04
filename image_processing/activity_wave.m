@@ -1,4 +1,4 @@
-function [intensity_total_fil, M] = activity_wave(imagelist_ratio, edge_data, centerline_data_spline, curvdatafiltered, thresh_size, one_vertices_zero_circle, one_avi_zero_gif, cutoff_or_not)
+function [intensity_total_fil, intensity_total, M] = activity_wave(imagelist_ratio, edge_data, centerline_data_spline, curvdatafiltered, thresh_size, one_vertices_zero_circle, one_avi_zero_gif, cutoff_or_not)
 
     % Prepare data    
     col_num = size(imagelist_ratio{1, 1}, 1);

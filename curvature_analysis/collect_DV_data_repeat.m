@@ -6,9 +6,9 @@ fname = [partlast '_Dorsal_Ventral_All'];
 
 %% Collect raw data
 
-framenum = 60;
+framenum = 3600;
 [dorsal_ratio, ventral_ratio, dorsal, dorsal_gfp, ventral, ventral_gfp] ...
-    = collect_DV_data(pwd, framenum);
+    = collect_DV_data(pwd, framenum, 'Old');
 save(fname, 'dorsal_ratio', 'ventral_ratio', ...
     'dorsal', 'dorsal_gfp', 'ventral', 'ventral_gfp');
 

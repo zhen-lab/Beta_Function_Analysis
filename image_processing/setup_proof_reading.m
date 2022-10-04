@@ -59,9 +59,9 @@
             %   load(f_calibration_green);
             % end
 
-            for i=1:size(img_stack,3)
+            for idx=1:size(img_stack,3)
 
-                img_stack(:,:,i)=imagelist{i,1};
+                img_stack(:,:,idx)=imagelist{idx,1};
 
             end
 
@@ -74,16 +74,36 @@
     % 
     %         istart = frames(1);
     %         iend = frames(2); 
-            istart = 1; iend = i;
+            istart = 1; iend = idx;
             numframes=iend-istart+1; 
 
             %number of time series
 
     %     end
-
-            [imagelist_r, imagelist_g] = split_two_screens(imagelist);
-            range = [istart iend];
-        
+    
+            framestruct = questdlg('Split view or alternating sampling?', 'Image', 'Split', 'Alternating', 'Split');
+            switch framestruct
+                case 'Split'
+                    % Left and right screen
+                    [imagelist_r, imagelist_g] = split_two_screens(imagelist);
+                    range = [istart iend];
+                case 'Alternating'
+                    % Alternating frames
+                    channelorder = questdlg('GFP or RFP channel first?',...
+                        'Channel order',...
+                        'GFP','RFP','GFP');
+                    switch channelorder
+                        case 'GFP'
+                            imagelist_g = imagelist(1:2:end,1);
+                            imagelist_r = imagelist(2:2:end,1);
+                        case 'RFP'
+                            imagelist_g = imagelist(2:2:end,1);
+                            imagelist_r = imagelist(1:2:end,1);
+                    end
+                    range = [istart iend/2];
+            end
+%             [imagelist_r, imagelist_g] = split_two_screens(imagelist);
+%             range = [istart iend];
         else
             fprintf('user canceled selection. \n');
         end

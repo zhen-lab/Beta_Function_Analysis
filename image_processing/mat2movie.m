@@ -1,15 +1,103 @@
 % function [] = mat2movie(filename, imagelist_g, imagelist_r, gfp, rfp, np, thresh, mini, maxi, r)
 %% 
-setup_proof_reading;
-fprintf('tiff files loading finished. \n');
+close all; clear;
+%%
+% setup_proof_reading;
+% fprintf('tiff files loading finished. \n');
 % imagelist_g = imagelist(1:2:end,1);
 % imagelist_r = imagelist(2:2:end,1);
+setup_proof_reading;
+updated = 0;
+imagelist_g = cellfun(@double, imagelist_g, 'uniformoutput', 0);
+imagelist_r = cellfun(@double, imagelist_r, 'uniformoutput', 0);
 
-%% Register RFP and GFP channels
-figure; 
-subplot(1,2,1); imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
-image_registration_tform; 
-subplot(1,2,2); imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
+fprintf('tiff loading completed. \n');
+
+%% For processed movies, register channels with existing parameters for
+
+% fpara = uigetfile('*.mat', ['Select a file for parameters of ' filename]);
+% load(fpara);
+% 
+% figure;
+% subplot(121);
+% imtomove = imwarp(imagelist_r{1},tform,'OutputView',imref2d(size(imagelist_r{1})));
+% imshowpair(imtomove, imagelist_g{1}); title('Left channel moved');
+% subplot(122);
+% imtomove = imwarp(imagelist_g{1},tform,'OutputView',imref2d(size(imagelist_g{1})));
+% imshowpair(imagelist_r{1}, imtomove); title('Right channel moved');
+
+channeltomove = questdlg('Which channel to move?', 'Channel', 'Left', 'Right', 'Right');
+switch channeltomove
+    case 'Left'
+        [img_updated, movingRegistered, tform] = image_registration_tform_muscle...
+            (imagelist_g, imagelist_r, channeltomove);
+    case 'Right'            
+        [img_updated, movingRegistered, tform] = image_registration_tform_muscle...
+            (imagelist_r, imagelist_g, channeltomove);
+end
+% %% Register RFP and GFP channels
+% figure; 
+% subplot(1,2,1); imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
+% image_registration_tform; 
+% subplot(1,2,2); imshowpair(imagelist_g{1,1}, imagelist_r{1,1});
+
+%% Update the channel that has been moved
+
+% Remove edges from registration
+imagelist_moved = movingRegistered;
+for i = 1:length(imagelist_g)
+    img = movingRegistered{i};
+    img = img + mean(img,[1 2])*double(img==0);
+    imagelist_moved{i,1} = img;
+end
+fprintf('edges removed. \n');
+
+% Update the channel
+switch channeltomove
+    case 'Left'
+        imagelist_r = imagelist_moved;
+    case 'Right'
+        imagelist_g = imagelist_moved;
+end
+updated = 1;
+fprintf('channel updated. \n');
+
+% % Overlay two channels if necessary
+% imagelist_use = imagelist_moved;
+% for i = 1:length(imagelist)
+%     imagelist_use{i,1} = imagelist_g{i,1}+imagelist_r{i,1};
+% end
+% fprintf('channels overlaid. \n');
+
+%% Find proper adaptive threshold for the numerator image (normally for the GCaMP side)
+
+if updated~=1
+    fprintf('please update the registered channel first.\n');
+else
+    % Find proper adaptive threshold
+    th = .3;
+    % Apply threshold and filtering to all numerator images
+    gsfilt = .6; 
+    % gpsf = fspecial('gaussian',9,9);
+    imagelist_gseg = imagelist_g;
+    imagelist_segratio = imagelist_g;
+    imagelist_segratiofilt = imagelist_g;
+    % imagelist_segratiodecon = imagelist_g;
+
+    for ni = 1:length(imagelist_g)
+        imusedseg = imgaussfilt(imagelist_g{ni,1}+imagelist_r{ni,1},gsfilt);
+        Itoseg = uint16(imusedseg);
+        T = adaptthresh(Itoseg, th);
+        segmask = double(imbinarize(Itoseg, T));
+        if ni==1, close all; imshow(segmask), end
+        imagelist_gseg{ni,1} = segmask.*imagelist_g{ni,1};
+        imagelist_segratio{ni,1} = imagelist_gseg{ni,1}./imagelist_r{ni,1};
+        imagelist_segratiofilt{ni,1} = imgaussfilt(imagelist_segratio{ni,1},gsfilt);
+    %     imagelist_gsegdecon = deconvlucy(imagelist_gseg{ni,1},gpsf);
+    %     imagelist_segratiofilt{ni,1} = imagelist_gseggfilt./imagelist_r{ni,1};
+    %     imagelist_segratiodecon{ni,1} = imagelist_gsegdecon./imagelist_r{ni,1};
+    end
+end
 
 %% Animation
 
@@ -20,10 +108,10 @@ dc = @(x) deconvlucy(x, fspecial('gaussian', 5, 2), 1);
 flt = @(x, h) imfilter(double(dc(x)), h, 'circular');
 flt_and_normalize = @(x) uint8(flt(x, bump_finder)/normalization*256-5);
 
-if ~(length(imagelist_g) == length(imagelist_r))  
+if ~(size(imagelist_g) == size(imagelist_r))  
     disp('Size mismatching');
 else
-    cropstart = 1; backstart = [109 193]; relativebs = backstart-cropstart;
+    cropstart = 1; backstart = [49 550; 840 957]; relativebs = backstart-cropstart;
     framenum = length(imagelist_g);
     
     np_cropped = np_adj(cropstart:(cropstart+framenum-1),:);
@@ -34,8 +122,9 @@ else
     r = 8; mini = 0; maxi = 100;
     canvas_x = 3; canvas_y = size(np_cropped, 2)/2;
     cmp = lbmap(canvas_y, 'redblue');
-    cmproi = colormap(hot); cmproi(1,:) = [0 0 0];
-    ratio = gfp_cropped./rfp_cropped; ratio_norm = ratio./repmat(max(ratio), size(ratio,1) ,1);
+    cmproi = colormap(inferno); cmproi(1,:) = [0 0 0];
+    ratio = gfp_cropped./rfp_cropped; 
+    ratio_norm = ratio./repmat(max(ratio), size(ratio,1) ,1);
     fps = 10; ff = 0.4;
     adj = 0.1;
     

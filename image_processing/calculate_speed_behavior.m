@@ -1,4 +1,4 @@
-function [vel_anterior_sign, vel_posterior_sign, dorsal_data, ventral_data, centerline_data_spline] = calculate_speed_behavior(filename, pathname, data)
+function [vel_anterior_sign, vel_posterior_sign, dorsal_data, ventral_data, centerline_data_spline] = calculate_speed_behavior(imagelist, filename, pathname, data)
 
 %%%%%%%%%%%%%%%%%%%%
 % Set up constant variables
@@ -12,13 +12,14 @@ if str2double(filename)==0
 else
 
     % Use prompt to define variables
+    framenum = size(imagelist,1);
     prompt = {'Magnification',...
         'Total time','Total frames',...
         'Start frame','End frame'};
 %                 'Minimum consecutive frames'};
     dlgtitle = ['Input for speed calculation for ' filename];
     dims = [1 35];
-    definput = {'4','75','2000','1','2000'};
+    definput = {'4','75', num2str(framenum),'1', num2str(framenum)};
     answer = inputdlg(prompt,dlgtitle,dims,definput);
 
     if isempty(answer)

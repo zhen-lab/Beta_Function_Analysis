@@ -1,28 +1,76 @@
 %% Segment the images with behavior recordings
 
-behavior_segmentation;
+%% Image loading
+
+setup_proof_reading;
+
+%% Image segmentation
+
+% Segment all images
+smallarea = 1;
+[dorsal_data, ventral_data, centerline_data, ...
+    centerline_data_spline, curvdata, curvdatafiltered, cropbounds] = ...
+    extract_centerline_behavior(imagelist, img_stack, smallarea, ...
+    4, 2, 1, 0.565, 0.565);
+
+% Save data
+parts = strsplit(pathname, '\');
+data_path = fullfile(parts{1,1:end-3}, 'Alpha_Data_Raw', parts{1,end-1});
+warning('off'); mkdir(data_path); 
+data_path_name = fullfile(data_path, [filename(1:end-4) '.mat']);
+save(data_path_name, ...
+    'centerline_data_spline', 'curvdatafiltered', 'dorsal_data', 'ventral_data', 'cropbounds');
+fprintf('data saved. \n');
+
+% system('shutdown -s');
 fprintf('segmentation of recording is done. \n');
 
-%% Load tif file after segmentation is completed
+%% Load tif file if segmentation is already completed
+% Skip this step if in the middle of complete analysis
 
 setup_proof_reading;
 
 %% Calculate speed by correcting stage movement
+% Switch to the data folder!!!!!!!!!!!!!!!!!!!!
 
 [vel_anterior_sign, vel_posterior_sign, ...
     dorsal_data, ventral_data, centerline_data_spline] = ...
-    calculate_speed_behavior(filename, pathname, data);
+    calculate_speed_behavior(imagelist, filename, pathname, data);
 fprintf('speed calculation is done. \n');
 
 %% Curate speed profile by GUI
 
-smallarea = 0; % If the images were cropped in segmetation into 1/4, set this to 1; else set this to 0
-behavior_correct_speed(...
-    imagelist, filename, 1, 2000, ...
-    dorsal_data, ventral_data, ...
-    centerline_data_spline, ...
-    vel_anterior_sign, vel_posterior_sign,...
-    smallarea);
+quest = {'Was the recording cropped for analysis?'};
+dlgtitle = 'Cropped';
+iscropped = questdlg(quest,dlgtitle,'Yes','No','Yes');
+
+quest = {'Is the file curated for velocity already?'};
+dlgtitle = 'Curation';
+iscurated = questdlg(quest,dlgtitle,'Yes','No','No');
+
+switch iscropped
+    case 'Yes'
+        smallarea = 1;
+    case 'No'
+        smallarea = 0;
+end
+
+switch iscurated
+    case 'No'
+        behavior_correct_speed(...
+            imagelist, filename, 1, size(imagelist,1), ...
+            dorsal_data, ventral_data, ...
+            centerline_data_spline, ...
+            vel_anterior_sign, vel_posterior_sign,...
+            smallarea, cropbounds);
+    case 'Yes'
+        behavior_correct_speed(...
+            imagelist, filename, 1, size(imagelist,1), ...
+            dorsal_data, ventral_data, ...
+            centerline_corrected, ...
+            velocity_corrected_anterior, velocity_corrected_posterior,...
+            smallarea, cropbounds);
+end
 
 %% Draw figures
 
@@ -56,7 +104,7 @@ plot(velocity_corrected_mean_smd, 'k', 'linewidth', 2);
 save([filename(1:end-4) '_velocity_curated.mat'], ...
     'velocity_corrected_anterior', 'velocity_corrected_posterior',...
     'velocity_corrected_mean', 'velocity_corrected_mean_smd',...
-    'centerline_corrected');
+    'centerline_corrected', 'dorsal_data_corrected', 'ventral_data_corrected');
 savefig(s, [filename(1:end-4) '_velocity_curated.fig']);
 saveas(s, [filename(1:end-4) '_velocity_curated.tif'], 'tiffn');
 

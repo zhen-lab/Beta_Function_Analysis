@@ -1,4 +1,4 @@
-function [curvdatafiltered, nan_frame] = midline2curv(filename, fps)
+function [curvdatafiltered, nan_frame] = midline2curv(filename)
 
 filename_string = char(filename);
 alldata = xlsread(filename_string);

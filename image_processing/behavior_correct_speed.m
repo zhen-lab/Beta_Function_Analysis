@@ -22,7 +22,7 @@ function varargout = behavior_correct_speed(varargin)
 
 % Edit the above text to modify the response to help behavior_correct_speed
 
-% Last Modified by GUIDE v2.5 16-Aug-2019 13:43:42
+% Last Modified by GUIDE v2.5 02-Mar-2020 22:05:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -64,9 +64,11 @@ handles.centerline=varargin{7};
 handles.velant=varargin{8};
 handles.velpos=varargin{9};
 handles.smallarea=varargin{10};
+handles.bounds=varargin{11};
 
 if handles.smallarea==1
-    handles.img_stack(:,1) = cellfun(@(x) x(end/4:end/4*3, end/4:end/4*3), handles.img_stack(:,1), 'UniformOutput', false);
+%     handles.img_stack(:,1) = cellfun(@(x) x(end/4:end/4*3, end/4:end/4*3), handles.img_stack(:,1), 'UniformOutput', false);
+    handles.img_stack(:,1) = cellfun(@(x) x(handles.bounds(3):handles.bounds(4), handles.bounds(1):handles.bounds(2)), handles.img_stack(:,1), 'UniformOutput', false);
 end
 
 [height,width]=size(handles.img_stack{1,1});
@@ -94,7 +96,7 @@ colormap(gray);
 hold on;
 i=handles.istart;
 plot(handles.dorsal{2*i-1,1}, handles.dorsal{2*i,1}, 'r');
-plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'r');
+plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'b');
 plot(handles.centerline(:, 2*i-1), handles.centerline(:, 2*i), 'w', 'linewidth', 1.5);
 plot(handles.centerline(1,2*i-1), handles.centerline(1, 2*i), 'og', 'markersize', 4, 'markerfacecolor', 'g');
 plot(handles.centerline(end/2,2*i-1), handles.centerline(end/2, 2*i), 'ok', 'markersize', 4, 'markerfacecolor', 'k');
@@ -165,7 +167,7 @@ img=imagesc(handles.img_stack{handles.framenumber+handles.istart-1,1});
 colormap(gray); hold on;
 i=handles.framenumber+handles.istart-1;
 plot(handles.dorsal{2*i-1,1}, handles.dorsal{2*i,1}, 'r');
-plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'r');
+plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'b');
 plot(handles.centerline(:, 2*i-1), handles.centerline(:, 2*i), 'w', 'linewidth', 1.5);
 plot(handles.centerline(1,2*i-1), handles.centerline(1, 2*i), 'og', 'markersize', 4, 'markerfacecolor', 'g');
 plot(handles.centerline(end/2,2*i-1), handles.centerline(end/2, 2*i), 'ok', 'markersize', 4, 'markerfacecolor', 'k');
@@ -212,7 +214,7 @@ img=imagesc(handles.img_stack{handles.framenumber+handles.istart-1,1});
 colormap(gray); hold on;
 i=handles.framenumber+handles.istart-1;
 plot(handles.dorsal{2*i-1,1}, handles.dorsal{2*i,1}, 'r');
-plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'r');
+plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'b');
 plot(handles.centerline(:, 2*i-1), handles.centerline(:, 2*i), 'w', 'linewidth', 1.5);
 plot(handles.centerline(1,2*i-1), handles.centerline(1, 2*i), 'og', 'markersize', 4, 'markerfacecolor', 'g');
 plot(handles.centerline(end/2,2*i-1), handles.centerline(end/2, 2*i), 'ok', 'markersize', 4, 'markerfacecolor', 'k');
@@ -226,15 +228,92 @@ beep;
 % Update handles structure
 guidata(hObject, handles);
 
+% --- Executes on button press in DV_all_frames.
+function DV_all_frames_Callback(hObject, eventdata, handles)
+% hObject    handle to DV_all_frames (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+pointofchange = handles.framenumber;
+dvswitchmedia = handles.dorsal((2*pointofchange-1):end);
+handles.dorsal((2*pointofchange-1):end) = ...
+    handles.ventral((2*pointofchange-1):end);
+handles.ventral((2*pointofchange-1):end) = ...
+    dvswitchmedia;
+
+% Update velocity
+axes(handles.Velocity);
+cla;
+% plot(handles.velant,'g');
+% hold on;
+plot(handles.velpos,'k'); hold on;
+plot([1 handles.image_depth], [0 0], 'r');
+ylim([-handles.mag*handles.med handles.mag*handles.med]);
+plot([handles.framenumber handles.framenumber], ylim, 'm');
+
+% Update recording
+axes(handles.Recording);
+cla;
+img=imagesc(handles.img_stack{handles.framenumber+handles.istart-1,1});
+colormap(gray); hold on;
+i=handles.framenumber+handles.istart-1;
+plot(handles.dorsal{2*i-1,1}, handles.dorsal{2*i,1}, 'r');
+plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'b');
+plot(handles.centerline(:, 2*i-1), handles.centerline(:, 2*i), 'w', 'linewidth', 1.5);
+plot(handles.centerline(1,2*i-1), handles.centerline(1, 2*i), 'og', 'markersize', 4, 'markerfacecolor', 'g');
+plot(handles.centerline(end/2,2*i-1), handles.centerline(end/2, 2*i), 'ok', 'markersize', 4, 'markerfacecolor', 'k');
+plot(handles.centerline(end,2*i-1), handles.centerline(end, 2*i), 'oy', 'markersize', 4, 'markerfacecolor', 'y');
+text(10,10,['Frame #' num2str(handles.framenumber)],'color', 'k');
+set(handles.Recording, 'xticklabel', [], 'yticklabel', [], 'ticklength', [0 0], 'Units', 'pixels', 'DataAspectRatio', [1 1 1]);
+set(img,'ButtonDownFcn', 'proof_reading(''ButtonDown_Callback'',gcbo,[],guidata(gcbo))');
+
+beep;
+
+guidata(hObject, handles);
+
+% --- Executes on button press in DV_one_frame.
+function DV_one_frame_Callback(hObject, eventdata, handles)
+% hObject    handle to DV_one_frame (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 % function behavior_correct_speed_WindowKeyPressFcn(hObject, eventdata, handles)
-%  % determine the key that was pressed 
-%  keyPressed = eventdata.Key;
-%  if strcmpi(keyPressed,'x')
-%      % set focus to the button
-%      uicontrol(handles.one_frame);
-%      % call the callback
-%      pushbutton1_Callback(handles.one_frame,[],handles);
-%  end
+
+pointofchange = handles.framenumber;
+dvswitchmedia = handles.dorsal((2*pointofchange-1):2*pointofchange);
+handles.dorsal((2*pointofchange-1):2*pointofchange) = ...
+    handles.ventral((2*pointofchange-1):2*pointofchange);
+handles.ventral((2*pointofchange-1):2*pointofchange) = ...
+    dvswitchmedia;
+
+% Update velocity
+axes(handles.Velocity);
+cla;
+% plot(handles.velant,'g');
+% hold on;
+plot(handles.velpos,'k'); hold on;
+plot([1 handles.image_depth], [0 0], 'r');
+ylim([-handles.mag*handles.med handles.mag*handles.med]);
+plot([handles.framenumber handles.framenumber], ylim, 'm');
+
+% Update recording
+axes(handles.Recording);
+cla;
+img=imagesc(handles.img_stack{handles.framenumber+handles.istart-1,1});
+colormap(gray); hold on;
+i=handles.framenumber+handles.istart-1;
+plot(handles.dorsal{2*i-1,1}, handles.dorsal{2*i,1}, 'r');
+plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'b');
+plot(handles.centerline(:, 2*i-1), handles.centerline(:, 2*i), 'w', 'linewidth', 1.5);
+plot(handles.centerline(1,2*i-1), handles.centerline(1, 2*i), 'og', 'markersize', 4, 'markerfacecolor', 'g');
+plot(handles.centerline(end/2,2*i-1), handles.centerline(end/2, 2*i), 'ok', 'markersize', 4, 'markerfacecolor', 'k');
+plot(handles.centerline(end,2*i-1), handles.centerline(end, 2*i), 'oy', 'markersize', 4, 'markerfacecolor', 'y');
+text(10,10,['Frame #' num2str(handles.framenumber)],'color', 'k');
+set(handles.Recording, 'xticklabel', [], 'yticklabel', [], 'ticklength', [0 0], 'Units', 'pixels', 'DataAspectRatio', [1 1 1]);
+set(img,'ButtonDownFcn', 'proof_reading(''ButtonDown_Callback'',gcbo,[],guidata(gcbo))');
+
+beep;
+
+guidata(hObject, handles);
  
 % --- Executes on slider movement.
 function slider1_Callback(hObject, eventdata, handles)
@@ -265,7 +344,7 @@ img=imagesc(handles.img_stack{handles.framenumber+handles.istart-1,1});
 colormap(gray); hold on;
 i=handles.framenumber+handles.istart-1;
 plot(handles.dorsal{2*i-1,1}, handles.dorsal{2*i,1}, 'r');
-plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'r');
+plot(handles.ventral{2*i-1,1}, handles.ventral{2*i,1}, 'b');
 plot(handles.centerline(:, 2*i-1), handles.centerline(:, 2*i), 'w', 'linewidth', 1.5);
 plot(handles.centerline(1,2*i-1), handles.centerline(1, 2*i), 'og', 'markersize', 4, 'markerfacecolor', 'g');
 plot(handles.centerline(end/2,2*i-1), handles.centerline(end/2, 2*i), 'ok', 'markersize', 4, 'markerfacecolor', 'k');
@@ -361,6 +440,11 @@ function export_data_Callback(hObject, eventdata, handles)
 assignin('base','velocity_corrected_anterior',handles.velant);
 assignin('base','velocity_corrected_posterior',handles.velpos);
 assignin('base','centerline_corrected',handles.centerline);
+assignin('base','dorsal_data_corrected',handles.dorsal);
+assignin('base','ventral_data_corrected',handles.ventral);
 
 fprintf(['corrected speed is exported for ' handles.filename '.\n']);
 fprintf('speed manual curation is done. \n');
+
+
+
