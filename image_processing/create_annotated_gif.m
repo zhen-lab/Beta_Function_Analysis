@@ -57,7 +57,7 @@ for n = 1:numframes
       frame = getframe(1);
       im = frame2im(frame);
       [imind,cm] = rgb2ind(im,256);
-      if n == 1;
+      if n == 1
           imwrite(imind,cm,filename,'gif', 'Loopcount',inf, 'delaytime', spf);
       else
           imwrite(imind,cm,filename,'gif','WriteMode','append', 'delaytime', spf);

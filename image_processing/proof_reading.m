@@ -7,7 +7,8 @@ function varargout = proof_reading(varargin)
 % 4. istart=varargin{4};
 % 5. iend=varargin{5};
 % 6. neuron_number=varargin{6};
-% 7. on_the_left=varargin{7};
+% 7. framestruct=varargin{7};
+% 8. on_the_left=varargin{8};
 
 
 % PROOF_READING MATLAB code for proof_reading.fig
@@ -33,7 +34,7 @@ function varargout = proof_reading(varargin)
 
 % Edit the above text to modify the response to help proof_reading
 
-% Last Modified by GUIDE v2.5 30-Aug-2019 14:03:33
+% Last Modified by GUIDE v2.5 25-May-2020 17:20:59
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -69,9 +70,15 @@ handles.transformation_array=varargin{2};
 handles.filename=varargin{3};
 handles.istart=varargin{4};
 handles.iend=varargin{5};
+handles.framestruct=varargin{7};
 
 [height,width]=size(handles.img_stack{1,1});
-sections=length(handles.img_stack);
+switch handles.framestruct
+    case 'Split'
+        sections=length(handles.img_stack);
+    case 'Alternating'
+        sections=length(handles.img_stack)/2;
+end
 handles.image_width=width;
 handles.image_height=height;
 handles.image_depth=handles.iend-handles.istart+1;
@@ -103,12 +110,13 @@ set(img,'ButtonDownFcn', 'proof_reading(''ButtonDown_Callback'',gcbo,[],guidata(
 handles.neuron_number=varargin{6};
 handles.colorset=hsv(handles.neuron_number);
 handles.on_the_left = 1; % If signal for tracking is on the left side, assign on_the_left as 1, so that the signal for calculation on the right side is used; else, 0
+% disp(num2str(handles.on_the_left));
 
 % Overlap neuron position in RFP and GFP
 
-if length(varargin)==7
+if length(varargin)==8
     
-    handles.neuronal_position=varargin{7};
+    handles.neuronal_position=varargin{8};
     handles.isproofread=ones(handles.image_depth,1);
     
 else
@@ -194,7 +202,17 @@ end
 
 delete(handles.figure1)
 
+% --- Executes during object creation, after setting all properties.
+function slider1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
 
+% Hint: slider controls usually have a light gray background.
+
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
 
 % --- Executes on slider movement.
 function slider1_Callback(hObject, eventdata, handles)
@@ -204,6 +222,7 @@ function slider1_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
 handles.frame_number=round(get(hObject,'Value'));
 set(handles.text1, 'String',strcat(num2str(handles.frame_number+handles.istart-1),'/',num2str(handles.sections),'(',handles.filename,')'));
 axes(handles.Image_axes);
@@ -212,6 +231,7 @@ img=imagesc(handles.img_stack{handles.frame_number+handles.istart-1,1});
 colormap(gray);
 
 set(img,'ButtonDownFcn', 'proof_reading(''ButtonDown_Callback'',gcbo,[],guidata(gcbo))');
+% set(f,'WindowKeyPressFcn',@keyPressCallback);
 
 for j=1:handles.neuron_number
     if ~isempty(handles.neuronal_position{handles.frame_number,j})
@@ -253,20 +273,16 @@ for j=1:handles.neuron_number
 end
 
 guidata(hObject,handles);
+  
 
-
-% --- Executes during object creation, after setting all properties.
-function slider1_CreateFcn(hObject, eventdata, handles)
+% --- Executes on key press with focus on slider1 and none of its controls.
+function slider1_KeyPressFcn(hObject, eventdata, handles)
 % hObject    handle to slider1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
+% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
 
 
 % ----click on the axes to identify neuronal positions and update neuronal
@@ -788,6 +804,9 @@ for j=handles.frame_number+1:iend
             
     end
 end
+
+% disp(num2str(handles.on_the_left));
+
 guidata(hObject, handles);
 
 % --- Executes on button press in Signal_plot.
@@ -815,7 +834,7 @@ if ~isempty(handles.neuronal_position{handles.frame_number, 1})
 
             % Get the image pixels and background on the signal screen,
             % which is on the right side as default
-            img = handles.img_stack{j + handles.istart - 1, 1}; % Data format: uint16
+            img = uint16(handles.img_stack{j + handles.istart - 1, 1}); % Data format: uint16
             background = background_percent * median(median(img(:, handles.image_width/2+1:end))); % Median is less sensitive to deviation
     
             % Signal that is used for tracking
@@ -913,24 +932,38 @@ function Export_data_Callback(hObject, eventdata, handles)
 % hObject    handle to Export_data (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-assignin('base','signal',handles.signal);
-assignin('base','signal_mirror',handles.signal_mirror);
-assignin('base','normalized_signal',handles.normalized_signal);
-assignin('base','dual_position_data',handles.neuronal_position);
-assignin('base','ratio',handles.signal_GFPoverRFP);
-assignin('base','points',handles.points);
-assignin('base','F_thresh',handles.F_thresh);
-assignin('base','F_sorted',handles.F_sorted);
 
-neuron_position_data=zeros(handles.frame_number,2);
-for i=1:length(neuron_position_data)
-    neuron_position_data(i,:)=handles.neuronal_position_left{i,1};
+if ~isequal(size(handles.neuronal_position_left{1,1}),[0 0])
+    cont = 1;
+    if handles.frame_number~=handles.image_depth
+        answer = questdlg('Slider not at the end, saving partial results, continue?', 'Yes', 'No', 'No');
+        switch answer
+            case 'Yes'
+                cont = 1;
+            case 'No'
+                cont = 0;
+                fprintf('user cancelled saving.\n');
+        end
+    end
+    if cont==1
+        assignin('base','signal',handles.signal);
+        assignin('base','signal_mirror',handles.signal_mirror);
+        assignin('base','normalized_signal',handles.normalized_signal);
+        assignin('base','dual_position_data',handles.neuronal_position);
+        assignin('base','ratio',handles.signal_GFPoverRFP);
+        assignin('base','points',handles.points);
+        assignin('base','F_thresh',handles.F_thresh);
+        assignin('base','F_sorted',handles.F_sorted);
+        neuron_position_data=zeros(handles.frame_number,2);
+        for i=1:length(neuron_position_data)
+            neuron_position_data(i,:)=handles.neuronal_position_left{i,1};
+        end
+        assignin('base','neuron_position_data',neuron_position_data);
+        fprintf('data exported.\n');
+    end
+else
+    fprintf('please click "Signal plot" button first.\n');
 end
-assignin('base','neuron_position_data',neuron_position_data);
-
-handles.exported = 1;
-
-fprintf('data exported.\n');
 
 guidata(hObject,handles);
 
@@ -970,14 +1003,68 @@ handles.neuronname = get(hObject, 'String');
 if isempty(handles.neuronname)
     handles.data_path_end = [handles.filename(1:end-4) '.mat'];
 else
-    handles.data_path_end = [handles.neuronname '_' handles.filename(1:end-4) '.mat'];
+%     handles.data_path_end = [handles.neuronname '_' handles.filename(1:end-4) '.mat'];
+    handles.data_path_end = [handles.filename(1:end-4) '_' handles.neuronname '.mat'];
 end
 
 handles.nameedited = 1;
 
 guidata(hObject,handles);
 
+
+% --- Executes on button press in Load_track.
+function Load_track_Callback(hObject, eventdata, handles)
+% hObject    handle to Load_track (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 % --- Executes during object creation, after setting all properties.
+
+c = regexp(handles.filename, '[A-Za-z]+\d*(?=[._])', 'match'); % find files with word# as prefix
+
+if isempty(c)
+    fprintf('failed to find files with prefix word#.\n');
+else
+    fname = uigetfile('.mat', 'Select position data', [c{1} '*.mat']);
+    if fname==0
+        fprintf('user cancelled selection. \n');
+    else
+        load(fname);
+        if exist('dual_position_data', 'var') % this is a cell
+            if median(cellfun(@(x) x(1), dual_position_data))<handles.image_width/2 && handles.on_the_left==0
+                dual_position_data = cellfun(@(x) x+[handles.image_width/2,0], dual_position_data, 'UniformOutput', false);
+                fprintf('original tracking on the left, current tracking on the right.\n');
+            elseif median(cellfun(@(x) x(1), dual_position_data))>handles.image_width/2 && handles.on_the_left==1
+                fprintf('original tracking on the right, current tracking on the left.\n');
+            end        
+            handles.neuronal_position = dual_position_data;
+            text(10, 30, 'Position data loaded', 'color', 'w');
+        elseif exist('np', 'var') % this is a matrix
+            prompt = {'Enter the neuron number'};
+            dlgtitle = 'Neuron #';
+            dims = [1 35];
+            definput = {'1'};
+            answer = inputdlg(prompt,dlgtitle,dims,definput);
+            neuronnum = str2double(answer);         
+            if median(np(:,2*neuronnum-1))<handles.image_width/2 && handles.on_the_left==0
+                np(:,2*neuronnum-1) = np(:,2*neuronnum-1)+handles.image_width/2;
+                fprintf('original tracking on the left, current tracking on the right.\n');
+            elseif median(np(:,2*neuronnum-1))>handles.image_width/2 && handles.on_the_left==1
+                fprintf('original tracking on the right, current tracking on the left.\n');
+            end
+            for idx = 1:size(np,1)
+                handles.neuronal_position{idx, 1}...
+                    = np(idx, 2*neuronnum-1:2*neuronnum);
+            end
+            text(10, 30, ['Position data loaded for neuron # ' answer], 'color', 'w');
+        else
+            handles.neuronal_position = cell(handles.iend-handles.istart+1,handles.neuron_number);
+        end   
+    end
+end
+
+guidata(hObject,handles);
+
+
 function Neuron_name_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to Neuron_name (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -996,25 +1083,90 @@ function Save_data_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-parts = strsplit(pwd, '\');
-data_path = fullfile(parts{1,1:end-2}, 'Alpha_Data_Raw', parts{1,end});
-warning('off'); mkdir(data_path);
-data_path_name = fullfile(data_path, handles.data_path_end);
-
-signal = handles.signal;
-signal_mirror = handles.signal_mirror;
-ratio = handles.signal_GFPoverRFP;
-dual_position_data = handles.neuronal_position;
-neuron_position_data=zeros(handles.frame_number,2);
-for i=1:length(neuron_position_data)
-    neuron_position_data(i,:)=handles.neuronal_position_left{i,1};
+if ~isequal(size(handles.neuronal_position_left{1,1}),[0 0])
+    cont = 1;
+    if handles.frame_number~=handles.image_depth
+        answer = questdlg(...
+            'Slider not at the end, saving partial results, continue?',...
+            'Partial', 'Yes', 'No', 'No');
+        switch answer
+            case 'Yes'
+                cont = 1;
+            case 'No'
+                cont = 0;
+                fprintf('user cancelled saving.\n');
+        end
+    end
+    if cont==1
+        parts = strsplit(pwd, '\');
+        data_path = fullfile(parts{1,1:end-2}, 'Alpha_Data_Raw', parts{1,end});
+        warning('off'); mkdir(data_path);
+        data_path_name = fullfile(data_path, handles.data_path_end);
+        signal = handles.signal;
+        signal_mirror = handles.signal_mirror;
+        ratio = handles.signal_GFPoverRFP;
+        dual_position_data = handles.neuronal_position;
+        neuron_position_data=zeros(handles.frame_number,2);
+        for i=1:length(neuron_position_data)
+            neuron_position_data(i,:)=handles.neuronal_position_left{i,1};
+        end
+        if handles.nameedited==1
+            save(data_path_name, ...
+                'signal', 'signal_mirror', 'ratio', ...
+                'neuron_position_data', 'dual_position_data');
+            fprintf([handles.data_path_end ' data saved. \n']);
+        else
+            fprintf('please name neurons before saving data. \n');
+        end
+    end
+else
+    fprintf('please click "Signal plot" button first. \n');
 end
 
-if handles.nameedited==1
-    save(data_path_name, ...
-        'signal', 'signal_mirror', 'ratio', ...
-        'neuron_position_data', 'dual_position_data');
-    fprintf([handles.data_path_end ' data saved. \n']);
-else
-    fprintf('please name neurons before saving data. \n');
+
+% --- Executes on key press with focus on figure1 or any of its controls.
+function figure1_WindowKeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.FIGURE)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+
+keyPress = eventdata.Key;
+frame_current = round(get(handles.slider1, 'Value'));
+switch keyPress
+    case {'rightarrow', 'd'}        
+        if frame_current<handles.image_depth
+            set(handles.slider1, 'Value', frame_current+1);
+            slider1_Callback(handles.slider1, eventdata, handles);
+        end
+    case {'leftarrow', 'a'}
+        if frame_current>1
+            set(handles.slider1, 'Value', frame_current-1);
+            slider1_Callback(handles.slider1, eventdata, handles);
+        end
+end
+
+
+% --- Executes on scroll wheel click while the figure is in focus.
+function figure1_WindowScrollWheelFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.FIGURE)
+%	VerticalScrollCount: signed integer indicating direction and number of clicks
+%	VerticalScrollAmount: number of lines scrolled for each click
+% handles    structure with handles and user data (see GUIDATA)
+
+scrollDir = eventdata.VerticalScrollCount;
+frame_current = round(get(handles.slider1, 'Value'));
+if scrollDir>0
+        if frame_current<handles.image_depth
+            set(handles.slider1, 'Value', frame_current+1);
+            slider1_Callback(handles.slider1, eventdata, handles);
+        end
+elseif scrollDir<0
+        if frame_current>1
+            set(handles.slider1, 'Value', frame_current-1);
+            slider1_Callback(handles.slider1, eventdata, handles);
+        end
 end

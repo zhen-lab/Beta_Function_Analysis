@@ -1,8 +1,9 @@
 function [img_updated, movingRegistered, tform] = image_registration_tform_muscle(img_tofix, img_tomove, lr)
 
-answer = inputdlg({'Registration coefficient','Frame number to be used'}, 'Input frame number', [1 35], {'1','10'});
-regfrmnum = str2double(answer{1});
-coef = str2double(answer{2});
+answer = inputdlg({'Registration coefficient','Frame number to be used'},...
+    'Input frame number', [1 35], {'1','1'});
+coef = str2double(answer{1});
+regfrmnum = str2double(answer{2});
 
 fixed = img_tofix{regfrmnum};
 moved = img_tomove{regfrmnum};

@@ -1,9 +1,10 @@
-function [dorsal_smd, ventral_smd, dorsal_smd_r, ventral_smd_r] = activity_all(imagelist_g, imagelist_r, range, dorsal_data, ventral_data, centerline_data_spline, curvdatafiltered)
+function [dorsal_smd, ventral_smd, dorsal_smd_r, ventral_smd_r, ...
+    dorsal_raw, ventral_raw, dorsal_raw_r, ventral_raw_r] = activity_all(imagelist_g, imagelist_r, range, dorsal_data, ventral_data, centerline_data_spline, curvdatafiltered)
 
-[dorsal_smd, ~] = activity_wave(imagelist_g(range(1):range(2)), dorsal_data, centerline_data_spline, curvdatafiltered, 0.35, 1, 0, 0);
-[ventral_smd, ~] = activity_wave(imagelist_g(range(1):range(2)), ventral_data, centerline_data_spline, curvdatafiltered, 0.35, 1, 0, 0);
-[dorsal_smd_r, ~] = activity_wave(imagelist_r(range(1):range(2)), dorsal_data, centerline_data_spline, curvdatafiltered, 0.35, 1, 0, 0);
-[ventral_smd_r, ~] = activity_wave(imagelist_r(range(1):range(2)), ventral_data, centerline_data_spline, curvdatafiltered, 0.35, 1, 0, 0);
+[dorsal_smd, dorsal_raw, ~] = activity_wave(imagelist_g(range(1):range(2)), dorsal_data, centerline_data_spline, curvdatafiltered, 0.35, 1, 0, 0);
+[ventral_smd, ventral_raw, ~] = activity_wave(imagelist_g(range(1):range(2)), ventral_data, centerline_data_spline, curvdatafiltered, 0.35, 1, 0, 0);
+[dorsal_smd_r, dorsal_raw_r, ~] = activity_wave(imagelist_r(range(1):range(2)), dorsal_data, centerline_data_spline, curvdatafiltered, 0.35, 1, 0, 0);
+[ventral_smd_r, ventral_raw_r, ~] = activity_wave(imagelist_r(range(1):range(2)), ventral_data, centerline_data_spline, curvdatafiltered, 0.35, 1, 0, 0);
 
 close all; 
 figure; headneck = 36;

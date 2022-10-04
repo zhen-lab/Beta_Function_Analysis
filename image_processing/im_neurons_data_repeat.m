@@ -28,14 +28,14 @@ parts = strsplit(pwd, '\');
 if ~isempty(s_exp)
     savefig(s_exp, ['Experimental_' parts{end} '.fig']);
     for i = 1:size(s_exp, 2)
-        saveas(s_exp(i), ['Experimental_' num2str(i) '_' parts{end} '.tif'], 'tiffn');
+        saveas(s_exp(i), ['Experimental_' num2str(i) '_' parts{end} '.emf'], 'meta');
     end
     fprintf('figures saved for EXPERIMENTAL group. \n');
 else
     if ~isempty(s_ctrl)
         savefig(s_ctrl, ['Control_' parts{end} '.fig']);
         for i = 1:size(s_ctrl, 2)
-            saveas(s_ctrl(i), ['Control_' num2str(i) '_' parts{end} '.tif'], 'tiffn');
+            saveas(s_ctrl(i), ['Control_' num2str(i) '_' parts{end} '.emf'], 'meta');
         end
         fprintf('figures saved for CONTROL group. \n');
     end

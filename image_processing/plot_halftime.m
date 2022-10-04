@@ -31,8 +31,8 @@ for i = 1:numtraces
 
 end
 
-set(gcf, 'color', 'w', 'units', 'normalized',...
-    'outerposition', [0 0 1 1]);
+% set(gcf, 'color', 'w', 'units', 'normalized',...
+%     'outerposition', [0 0 1 1]);
 
 parts = strsplit(pwd, '\');
 folder = regexp(parts, 'Alpha\w*', 'match');

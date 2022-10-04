@@ -4,11 +4,12 @@ function [curvdata, curvdatafiltered, lagsall, rall] = xcorr_angle_pairs(np, gfp
 curvdata = sig * curvdata;
 rall = zeros(size(curvdata, 2), 2*size(curvdata,1)-1);
 lagsall = zeros(size(curvdata, 2), 1);
-signal = smooth(gfp(:, 3)./rfp(:, 3));
+signal = smoothdata(gfp(:, 3)./rfp(:, 3), 'rloess');
 
 for i = 1:size(curvdata, 2)
 
-    [r,lags] = xcorr(normalize_signal(signal),normalize_signal(curvdata(:, i))); 
+    [r,lags] = xcorr(normalize_signal(signal),...
+        normalize_signal(curvdata(:, i))); 
     rall(i, :) = r';
     lagsall(i) = lags(r == max(r));
 
